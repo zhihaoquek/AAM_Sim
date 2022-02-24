@@ -2,14 +2,17 @@
 """
 @Time    : 02/11/2022 9:41 AM
 @Author  : Zhi Hao
-@FileName: Navigator.py
-@Description: Navigator agent.
+@FileName: Sensors.py
+@Description: Package for modelling various types of sensor errors. Used for modelling NSE, airspeed sensors, etc.
 @Package dependency:
 """
+
 import numpy as np
 import CrossPlatformDev
 from Engine.GlobalClock import Agent
 
+# NOTE: No intention to model air velocity error for now due to highly integrated
+# nature of controller/sensor architecture.
 
 class NavUpdate(Agent):
     def __init__(self, update_rate, start_time, err=np.zeros(3)):
