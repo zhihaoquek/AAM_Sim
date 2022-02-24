@@ -7,9 +7,10 @@
 @Package dependency:
 """
 import numpy as np
-import CrossPlatformDev
+from CrossPlatformDev import my_print
 from Engine.GlobalClock import Agent
 import pandas as pd
+
 
 class FlightPlan(object):
     """Object containing information about the various flight legs in a mission.
@@ -51,6 +52,9 @@ class FlightPlan(object):
                                              self.plan.iloc[self.current_leg_num - 1]['ETA'],
                                              self.plan.iloc[self.current_leg_num - 1]['Target Speed']
                                              )
+        elif self.current_leg_num == len(self.plan):
+                self.current_leg = None
+                return 'TERMINATE FLIGHT'
 
 
 class FlightLeg(object):
@@ -60,18 +64,35 @@ class FlightLeg(object):
         self.target_pos = ending_pt
         self.starting_pos = starting_pt
         self.tgt_speed = cruise_spd
-        self.hdg = self.starting_pos - self.target_pos
+        self.hdg = self.target_pos - self.starting_pos
         self.EDT = edt
         self.ETA = eta
+
     def get_target_pos(self, *parameter):
-        if self.mode == 'Hover':
-            return self.target_pos
+        # if self.mode == 'Hover':
+        #     return self.target_pos
+        return self.target_pos
 
     def get_eta(self):
         return self.ETA
 
     def get_mode(self):
         return self.mode
+
+    def line_gen(self, param):
+        return self.starting_pos + param * self.hdg
+
+    def lambda_calculator(self, position):
+        """A flight leg can be parameterized by lambda parameter.
+        Lambda = 0 --> tangential A/C coordinate at start pt.
+        Lambda = 1 --> tangential A/C coordinate at end pt.
+        This function calculates lambda using A/C estimated position,
+        i.e. where the A/C is along the flight leg.
+        """
+        CA = position - self.starting_pos
+        return np.dot(CA, self.hdg)/np.dot(self.hdg, self.hdg)
+
+
 
 
 

@@ -10,6 +10,10 @@ import platform
 
 
 def my_print(*args):
+    """Just to make things a little prettier :)
+    For debugging use. Prints output when debugging on a Windows machine.
+    For running on Linux systems like AWS servers, it will NOT print. This is to avoid
+    issues with tqdm package in Jupyter notebooks. """
     if platform.system() == 'Windows':
         print(*args)
 

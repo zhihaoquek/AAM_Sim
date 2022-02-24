@@ -7,7 +7,7 @@
 @Package dependency:
 """
 import numpy as np
-import CrossPlatformDev
+from CrossPlatformDev import my_print
 from Engine.GlobalClock import Agent
 
 

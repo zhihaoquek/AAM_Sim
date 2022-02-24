@@ -7,7 +7,7 @@
 @Package dependency:
 """
 import numpy as np
-import CrossPlatformDev
+from CrossPlatformDev import my_print
 import pandas as pd
 from Engine.GlobalClock import Agent
 from scipy.spatial.transform import Rotation as R
@@ -29,9 +29,9 @@ class State(Agent):
         self.rpy_accel = np.zeros(3)
         self.aircraft_type = aircraft_type
         self.thrust = np.zeros(3)
-        self.time = start_time
         self.commanded_net_force = np.zeros(3)
         self.controller_pos_err = np.zeros(3)
+        self.simstate = 1
         self.trajectory = []
 
 
@@ -66,8 +66,14 @@ class State(Agent):
     def air_vel_est(self, time, air_vel_sensor):
         return self.air_vel
 
-    def update(self, time, drag_model, controller, pos_nav_agent, vel_nav_agent, air_speed_sensor, windfield):
-        if super().check_time(time):
+    def update(self, time, drag_model, controller,
+               pos_nav_agent, vel_nav_agent, accel_nav_agent,
+               air_speed_sensor, windfield):
+        if isinstance(controller.flight_plan.current_leg, type(None)):
+            my_print('Final WPT reached')
+            self.simstate = 0
+
+        elif super().check_time(time):
 
             # Update wind and drag
             new_wind_spd = windfield.get_windspd(time, self.gt_pos)
@@ -77,14 +83,14 @@ class State(Agent):
             # Controller calculates thrust, rpy
             target_force, target_rpy, controller_error, commanded_net_force = controller.compute(self.gt_pos_est(time, pos_nav_agent),
                                                                                                  self.gt_vel_est(time, vel_nav_agent),
+                                                                                                 self.gt_accel_est(time, accel_nav_agent),
                                                                                                  new_wind_spd, time, drag_model, self.rpy)
 
             # Actual thrust/rpy achieved
             cur_rotation = R.from_euler('xyz', self.rpy).as_matrix()
             thrust = np.dot(cur_rotation, target_force)
             achieved_thrust = np.dot(np.array([0, 0, thrust[2]]), cur_rotation.T)
-            achieved_accel = (achieved_thrust + drag)/self.aircraft_type.mass \
-                             - np.array([0, 0, self.aircraft_type.mass * 9.81])
+            achieved_accel = (achieved_thrust + drag)/self.aircraft_type.mass - np.array([0, 0, 9.81])
 
             target_rpy_accel = controller.pid_attitude(self.rpy, target_rpy)
             new_rpy_rate = self.rpy_rate + target_rpy_accel * self.interval
@@ -106,13 +112,10 @@ class State(Agent):
             self.rpy_accel = target_rpy_accel.copy()
             self.rpy_rate = new_rpy_rate.copy()
             self.rpy = achieved_rpy.copy()
-            self.time = time
             self.commanded_net_force = commanded_net_force.copy()
             self.controller_pos_err = controller_error.copy()
 
-
             self.trajectory.append(self.return_df().copy())
-
 
     def get_trajectory(self):
         if len(self.trajectory) != 0:

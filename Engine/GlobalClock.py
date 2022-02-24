@@ -8,7 +8,7 @@ update rate and start time, and accepts timing control from the global clock.
 @Package dependency:
 """
 import numpy as np
-import CrossPlatformDev
+from CrossPlatformDev import my_print
 import platform
 
 
@@ -30,11 +30,13 @@ class Agent(object):
         self.start_time = start_time
         self.interval = 1/self.update_rate
         self.next_update_time = start_time
+        self.time = start_time
 
     def set_next_update_time(self):
         self.next_update_time += self.interval
 
     def check_time(self, time):
+        self.time = time
         if time >= self.next_update_time:
             self.next_update_time += self.interval
             return True

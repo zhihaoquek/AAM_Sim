@@ -8,7 +8,7 @@
 """
 
 import numpy as np
-import CrossPlatformDev
+from CrossPlatformDev import my_print
 from Engine.GlobalClock import Agent
 
 # NOTE: No intention to model air velocity error for now due to highly integrated
