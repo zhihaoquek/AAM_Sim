@@ -41,3 +41,31 @@ class Agent(object):
             self.next_update_time += self.interval
             return True
 
+
+class TimeTriggeredAgent(Agent):
+    """An agent that can be triggered at certain given timings.
+    Useful when update intervals are not fixed.
+    Note: this agent still has an internal update rate, which is used to check
+    for when the trigger time is reached. This internal update rate may be set
+    to the overall physics/world update rate if desired. """
+
+    def __init__(self, update_rate, start_time, phase_delay=0, trigger_time_list=None):
+        super().__init__(update_rate, start_time, phase_delay)
+        if isinstance(trigger_time_list, type(None)):
+            self.trigger_time_list = []
+        else:
+            self.trigger_time_list = trigger_time_list
+
+    def trigger(self, t):
+        my_print('trigger now! time now is: {t1}, trigger time is: {t2}'.format(t1=round(self.time, 4), t2=t))
+
+    def append_to_trigger_timings(self, time):
+        self.trigger_time_list.append(time)
+
+    def trigger_time(self, time):
+        if super().check_time(time):
+            if len(self.trigger_time_list) > 0:
+                self.time = time
+                if 0 <= (time - self.trigger_time_list[0]) / self.interval < 1:
+                    self.trigger(self.trigger_time_list[0])
+                    self.trigger_time_list.pop(0)
