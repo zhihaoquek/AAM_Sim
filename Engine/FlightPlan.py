@@ -33,6 +33,7 @@ class FlightPlan(object):
                                      )
 
     def change_flight_leg(self, time, override_eta=True):
+        my_print('CHANGE FLIGHT LEG')
         if self.current_leg_num < len(self.plan):
             self.current_leg_num += 1
             # Override EDT/ETA based on init time and "duration"
@@ -52,6 +53,8 @@ class FlightPlan(object):
                                              self.plan.iloc[self.current_leg_num - 1]['ETA'],
                                              self.plan.iloc[self.current_leg_num - 1]['Target Speed']
                                              )
+            my_print('Next Wpt is: ', self.current_leg.target_pos)
+            my_print('Hdg is: ', self.current_leg.hdg)
         elif self.current_leg_num == len(self.plan):
                 self.current_leg = None
                 return 'TERMINATE FLIGHT'

@@ -25,11 +25,11 @@ class GlobalClock(object):
 
 class Agent(object):
     """Generic agent template. Accepts timing info from global clock. Agent performs tasks at defined intervals."""
-    def __init__(self, update_rate, start_time):
+    def __init__(self, update_rate, start_time, phase_delay=0):
         self.update_rate = update_rate
         self.start_time = start_time
         self.interval = 1/self.update_rate
-        self.next_update_time = start_time
+        self.next_update_time = start_time + phase_delay
         self.time = start_time
 
     def set_next_update_time(self):
