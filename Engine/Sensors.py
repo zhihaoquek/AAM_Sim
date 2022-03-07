@@ -29,8 +29,8 @@ class GPSPosNavUpdate(NavUpdate):
     def __init__(self, update_rate, start_time,
                  x_auto, y_auto, z_auto,
                  x_sigma, y_sigma, z_sigma,
-                 x_mean=0, y_mean=0, z_mean=0
-                 ):
+                 x_mean=0, y_mean=0, z_mean=0,
+                 phase_delay=None):
         self.auto = np.array([x_auto, y_auto, z_auto])
         self.auto_sq = self.auto * self.auto
         self.x_sigma, self.y_sigma, self.z_sigma = x_sigma, y_sigma, z_sigma
@@ -38,7 +38,10 @@ class GPSPosNavUpdate(NavUpdate):
         err = np.array([np.random.normal(x_mean, x_sigma),
                         np.random.normal(y_mean, y_sigma),
                         np.random.normal(z_mean, z_sigma)])
-        super().__init__(update_rate, start_time, err, phase_delay=np.random.uniform(0, 1/update_rate))
+        if isinstance(phase_delay, type(None)):
+            super().__init__(update_rate, start_time, err, phase_delay=np.random.uniform(0, 1/update_rate))
+        else:
+            super().__init__(update_rate, start_time, err, phase_delay=phase_delay)
 
     def update_error(self, time):
         if super().check_time(time):

@@ -18,8 +18,9 @@ class AircraftType(object):
             # generate basic quadrotor model
             self.mass = mass
 
-            self.max_thrust = 100
-            self.max_roll_pitch = np.pi / 4
+            self.max_thrust = 200
+            # self.max_roll_pitch = np.pi / 4 # Original value
+            self.max_roll_pitch = np.pi / 2.2
 
             self.max_cruise_speed = max_cruise_spd  # default was 20, now changed to 5
             self.max_ascend_speed = 2  # default was 5

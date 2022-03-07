@@ -22,6 +22,7 @@ class State(Agent):
         self.air_vel = np.array([*vel]) - np.array([*wind_spd])
         self.accel = np.zeros(3)
         self.gt_pos_err = np.array([*pos_err])
+        self.gt_hor_err = np.sqrt(pos_err[0]**2 + pos_err[1]**2)
         self.gt_vel_err = np.array([*vel_err])
         self.accel_err = np.zeros(3)
         self.rpy = np.array(rpy)
@@ -43,6 +44,7 @@ class State(Agent):
         return pd.DataFrame({'gt_pos':[self.gt_pos], 'gt_vel':[self.gt_vel], 'wind_spd':[self.wind_spd],
                              'air_vel':[self.air_vel], 'accel':[self.accel],
                              'gt_pos_err':[self.gt_pos_err], 'gt_vel_err':[self.gt_vel_err],
+                             'gt_hor_err': [self.gt_hor_err],
                              'accel_err':[self.accel_err],
                              'rpy':[self.rpy], 'rpy_rate':[self.rpy_rate], 'rpy_accel':[self.rpy_accel],
                              'commanded_net_force':[self.commanded_net_force],
@@ -53,6 +55,7 @@ class State(Agent):
 
     def gt_pos_est(self, time, pos_nav_agent):
         self.gt_pos_err = pos_nav_agent.update_error(time)
+        self.gt_hor_err = np.sqrt(self.gt_pos_err[0]**2 + self.gt_pos_err[1]**2)
         return self.gt_pos + self.gt_pos_err
 
     def gt_vel_est(self, time, vel_nav_agent):
@@ -89,6 +92,12 @@ class State(Agent):
             # Actual thrust/rpy achieved
             cur_rotation = R.from_euler('xyz', self.rpy).as_matrix()
             thrust = np.dot(cur_rotation, target_force)
+            # Re-normalize thrust to ensure that A/C thrust "z" component is as desired
+            # Check attitude
+            norm = np.dot(cur_rotation, np.array([0, 0, 1]))
+            if np.arcsin(np.sqrt(norm[0]**2 + norm[1]**2)) < np.pi/2 - 0.1:
+                renorm = target_force[2]/thrust[2]
+                thrust = renorm * thrust
             achieved_thrust = np.dot(np.array([0, 0, thrust[2]]), cur_rotation.T)
             achieved_accel = (achieved_thrust + drag)/self.aircraft_type.mass - np.array([0, 0, 9.81])
 
@@ -98,7 +107,7 @@ class State(Agent):
 
             # Update dynamics (physics model)
             new_vel = self.gt_vel + achieved_accel * self.interval
-            new_gt_pos = self.gt_pos + new_vel * self.interval
+            new_gt_pos = self.gt_pos + (self.gt_vel + new_vel) / 2 * self.interval
 
             # Update all state values (note: error values are automatically updated when estimate methods are called)
             # Note: to test if removal of copy still provides correct values. If ok, might be better to remove for
@@ -114,6 +123,7 @@ class State(Agent):
             self.rpy = achieved_rpy.copy()
             self.commanded_net_force = commanded_net_force.copy()
             self.controller_pos_err = controller_error.copy()
+
 
             self.trajectory.append(self.return_df().copy())
 

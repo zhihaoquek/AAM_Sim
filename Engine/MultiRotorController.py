@@ -20,8 +20,8 @@ class MultiRotorController(Agent):
         self.target_rpy = None
         self.target_force = None
         self.aircraft_type = aircraft_type
-        self.p_att = np.array([9, 9, 9])  # x, y, z axis
-        self.i_att = np.array([0.001, 0.001, 0.001])
+        self.p_att = np.array([0.1, 0.1, 0.1])  # x, y, z axis
+        self.i_att = np.array([0, 0, 0])
         # self.i_att = np.array([0, 0, 0])
         self.d_att = np.array([7, 7, 7])
         self.last_rpy_e = np.zeros(3)
@@ -34,7 +34,9 @@ class MultiRotorController(Agent):
                                                              self.i_hover,
                                                              self.d_hover,
                                                              self.interval)
-        self.pid_P2P_tangential = np.array([1, 0.001, 0.8])
+        # Note: be careful when adjusting tangential I values. If commanded tangential force increases
+        # more quickly than commanded vertical force, RPY controller may "lock" at max RPY value.
+        self.pid_P2P_tangential = np.array([1, 0.003, 1])
         self.P2P_tangential_pseudo_calculator = PseudoForceCalculator(self.pid_P2P_tangential[0],
                                                                       self.pid_P2P_tangential[1],
                                                                       self.pid_P2P_tangential[2],
@@ -44,7 +46,7 @@ class MultiRotorController(Agent):
                                                                      self.pid_P2P_cross_trk[1],
                                                                      self.pid_P2P_cross_trk[2],
                                                                      self.interval, dim=1)
-        self.pid_P2P_vertical = np.array([1, 0.005, 0.9])
+        self.pid_P2P_vertical = np.array([6, 0.0035, 2.5])
         self.P2P_vertical_pseudo_calculator = PseudoForceCalculator(self.pid_P2P_vertical[0],
                                                                     self.pid_P2P_vertical[1],
                                                                     self.pid_P2P_vertical[2],
@@ -59,6 +61,7 @@ class MultiRotorController(Agent):
         self.tangential_unit_vector = None
         self.tangential_unit_vector_planar = None
         self.cross_trk_unit_vector = None
+        self.max_horizontal_force = self.aircraft_type.mass * 9.81 * np.tan(self.aircraft_type.max_roll_pitch)
 
     def compute(self, est_pos, est_vel, est_accel,  est_wind_spd, time, drag_model, rpy):
         """Computes target force and RPY, depending on controller mode. """
@@ -147,6 +150,9 @@ class MultiRotorController(Agent):
                                                                              tangential_accel) \
                              * self.tangential_unit_vector_planar
 
+                # net_force += self.P2P_tangential_pseudo_calculator.calculate(tangential_err) \
+                #              * self.tangential_unit_vector_planar
+
                 # my_print('net_force (stage 3): ', net_force)
                 net_force = net_force*self.aircraft_type.mass
                 error = np.array([tangential_err, cross_trk_error, vertical_error])
@@ -163,7 +169,7 @@ class MultiRotorController(Agent):
                         return self.target_force, self.target_rpy, self.controller_error, self.net_force
                     my_print('Controller mode changed from ' + self.mode + ' to ' + self.flight_plan.current_leg.mode)
                     self.mode = self.flight_plan.current_leg.get_mode()
-                    self.reset_tangential_target_speed_hdg() # Reset target speeds/hdgs/unit vectors
+                    self.reset_tangential_target_speed_hdg()  # Reset target speeds/hdgs/unit vectors
                     return self.compute(est_pos, est_vel, est_accel, est_wind_spd, time, drag_model, rpy)
 
                 # Switch controller tangential target speed and hdg back to None. Need this to make sure P2P mode works.
@@ -184,17 +190,16 @@ class MultiRotorController(Agent):
 
             # Force the commanded "z" component of target_force to be greater than (-1g * mass)
             target_force[2] = np.clip(target_force[2], 9.81 * self.aircraft_type.mass * 0.6,
-                                      1.8 * 9.81 * self.aircraft_type.mass)
+                                      2.5 * 9.81 * self.aircraft_type.mass)
 
             # Force x and y components of target_force to be clipped based on max RP...
-            # Note this is not very satisfactory
-            target_force[0] = np.clip(target_force[0],
-                                      -self.aircraft_type.mass * 9.81 * np.tan(self.aircraft_type.max_roll_pitch),
-                                      self.aircraft_type.mass * 9.81 * np.tan(self.aircraft_type.max_roll_pitch))
-
-            target_force[1] = np.clip(target_force[1],
-                                      -self.aircraft_type.mass * 9.81 * np.tan(self.aircraft_type.max_roll_pitch),
-                                      self.aircraft_type.mass * 9.81 * np.tan(self.aircraft_type.max_roll_pitch))
+            # There is some error with this mtd of calculating...
+            # horizontal_force = target_force[0]**2 + target_force[1]**2
+            # if horizontal_force > (self.max_horizontal_force * 1)**2:
+            #     my_print("Horizontal force reaching max at time %.3f" % time)
+            #     horizontal_force_scale = ((self.max_horizontal_force * 1)**2)/horizontal_force
+            #     target_force[0] = target_force[0] * horizontal_force_scale
+            #     target_force[1] = target_force[1] * horizontal_force_scale
 
             # Calculate desired rotation. From original UAMTrafficSimulator.
             target_rpy = np.zeros(3)
@@ -211,6 +216,10 @@ class MultiRotorController(Agent):
             target_rpy[0] = np.arcsin(-sign_z * target_force[1] / np.linalg.norm(target_force))
             target_rpy[1] = np.arctan2(sign_z * target_force[0], sign_z * target_force[2])
             target_rpy[2] = 0.
+
+            # if abs(target_force[0]) >= self.aircraft_type.mass * 9.81 * np.tan(self.aircraft_type.max_roll_pitch):
+            #     my_print('X force component saturated at %.3f sec, tgt pre-clip P: %.3f '%(self.time, target_rpy[1]))
+
             target_rpy[0] = np.clip(target_rpy[0],
                                     -self.aircraft_type.max_roll_pitch,
                                     self.aircraft_type.max_roll_pitch)
@@ -233,9 +242,9 @@ class MultiRotorController(Agent):
         self.tangential_unit_vector = None
         self.tangential_unit_vector_planar = None
         self.cross_trk_unit_vector = None
-        self.P2P_tangential_pseudo_calculator.reset_i_err()
+        # self.P2P_tangential_pseudo_calculator.reset_i_err()
         self.P2P_cross_trk_pseudo_calculator.reset_i_err()
-        self.P2P_vertical_pseudo_calculator.reset_i_err()
+        # self.P2P_vertical_pseudo_calculator.reset_i_err()
         self.hover_pseudo_calculator.reset_i_err()
         # return None
 

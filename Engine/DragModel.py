@@ -36,8 +36,9 @@ class DragModel(object):
         if self.disabled:
             return 0
         else:
-            #return 19.62 * self.scaling*(0.035+0.017*(np.sin(alpha))**2) #<--- this works but drag is wayyyy too high
-            return self.scaling * (0.035 + 0.017 * (np.sin(alpha)) ** 2)
+            # return 19.62 * self.scaling*(0.035+0.017*(np.sin(alpha))**2) #<--- this works but drag is wayyyy too high
+            # return self.scaling * (0.035 + 0.017 * (np.sin(alpha)) ** 2)
+            return self.scaling * (0.030 + 0.013 * (np.sin(alpha)) ** 2) # Tune down drag for a higher max speed...
 
     def get_angles(self, air_vel, rpy):
         """Gets air_vel using ground frame orientation, and aircraft RPY relative to ground. """
