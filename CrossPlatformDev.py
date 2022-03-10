@@ -18,3 +18,14 @@ def my_print(*args):
         print(*args)
 
 
+def join_str(*args):
+    if platform.system() == 'Windows':
+        if len(args) > 1:
+            return args[0] + '\\' + join_str(*args[1:])
+        else:
+            return args[0]
+    elif platform.system() == 'Linux':
+        if len(args) > 1:
+            return args[0] + '/' + join_str(*args[1:])
+        else:
+            return args[0]

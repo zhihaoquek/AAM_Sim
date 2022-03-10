@@ -41,7 +41,8 @@ class MultiRotorController(Agent):
                                                                       self.pid_P2P_tangential[1],
                                                                       self.pid_P2P_tangential[2],
                                                                       self.interval, dim=1)
-        self.pid_P2P_cross_trk = np.array([0.03, 0, 0.6])
+        # self.pid_P2P_cross_trk = np.array([0.03, 0, 0.6])  # Previous best
+        self.pid_P2P_cross_trk = np.array([2, 0, 1.5])  # For testing
         self.P2P_cross_trk_pseudo_calculator = PseudoForceCalculator(self.pid_P2P_cross_trk[0],
                                                                      self.pid_P2P_cross_trk[1],
                                                                      self.pid_P2P_cross_trk[2],

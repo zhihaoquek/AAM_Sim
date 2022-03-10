@@ -14,6 +14,7 @@ from Engine.GlobalClock import Agent
 # NOTE: No intention to model air velocity error for now due to highly integrated
 # nature of controller/sensor architecture.
 
+
 class NavUpdate(Agent):
     def __init__(self, update_rate, start_time, err=np.zeros(3), phase_delay=0):
         super().__init__(update_rate, start_time, phase_delay)

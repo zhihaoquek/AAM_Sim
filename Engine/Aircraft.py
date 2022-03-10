@@ -18,7 +18,7 @@ class AircraftType(object):
             # generate basic quadrotor model
             self.mass = mass
 
-            self.max_thrust = 200
+            self.max_thrust = 200  # not in use at the moment...
             # self.max_roll_pitch = np.pi / 4 # Original value
             self.max_roll_pitch = np.pi / 2.2
 
