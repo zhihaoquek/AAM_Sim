@@ -73,7 +73,7 @@ class State(Agent):
                pos_nav_agent, vel_nav_agent, accel_nav_agent,
                air_speed_sensor, windfield):
         if isinstance(controller.flight_plan.current_leg, type(None)):
-            my_print('Final WPT reached')
+            # my_print('Final WPT reached')
             self.simstate = 0
 
         elif super().check_time(time):

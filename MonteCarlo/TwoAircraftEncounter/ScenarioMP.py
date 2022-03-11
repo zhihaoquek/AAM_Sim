@@ -320,7 +320,7 @@ def simulate_encounter_gen(run, debug):
 
     while clock.time <= clock.stop:
         clock.update()
-        if AC1_State.simstate == 0:
+        if AC1_State.simstate + AC2_State.simstate == 0:
             continue
         # print(clock.time)
         AC1_State.update(clock.time, AC1_DragModel,
@@ -343,6 +343,7 @@ def simulate_encounter_gen(run, debug):
         GT_ConDet.update_taus(AC1_State.gt_pos, AC2_State.gt_pos, AC1_State.gt_vel, AC2_State.gt_vel)
         GT_ConDet.conflict_check(clock.time)
 
+    # After running the simulation, get trajectory info
     AC1_GT_Trajectory = AC1_State.get_trajectory()
     AC2_GT_Trajectory = AC2_State.get_trajectory()
 
@@ -351,6 +352,10 @@ def simulate_encounter_gen(run, debug):
         AC1_Trk_Trajectory = special_concat(Trackinator.trajectories['AC1'].trajectory)
         AC2_Trk_Trajectory = special_concat(Trackinator.trajectories['AC2'].trajectory)
         return (AC1_GT_Trajectory, AC2_GT_Trajectory, AC1_Trk_Trajectory, AC2_Trk_Trajectory, AC1_WPTs, AC2_WPTs)
+
+    # Do a quick check if final AC positions are roughly near their target WPTs
+    AC1_Dist_to_Last_WPT = np.linalg.norm(AC1_State.gt_pos - AC1_WPTs[-1])
+    AC2_Dist_to_Last_WPT = np.linalg.norm(AC2_State.gt_pos - AC2_WPTs[-1])
 
     res = pd.DataFrame({'Run': [run],
                         'AC1_NSE_Radial_Error_Mean': [AC1_GT_Trajectory['gt_hor_err'].mean()],
@@ -361,15 +366,21 @@ def simulate_encounter_gen(run, debug):
                         'AC1_NSE_Std_x': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 0).std()],
                         'AC1_NSE_Std_y': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 1).std()],
                         'AC1_NSE_Std_z': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 2).std()],
-                        'AC2_NSE_Radial_Error_Mean': [AC1_GT_Trajectory['gt_hor_err'].mean()],
-                        'AC2_NSE_Radial_Error_Std': [AC1_GT_Trajectory['gt_hor_err'].std()],
-                        'AC2_NSE_Mean_x': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 0).mean()],
-                        'AC2_NSE_Mean_y': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 1).mean()],
-                        'AC2_NSE_Mean_z': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 2).mean()],
-                        'AC2_NSE_Std_x': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 0).std()],
-                        'AC2_NSE_Std_y': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 1).std()],
-                        'AC2_NSE_Std_z': [extract_from_df(AC1_GT_Trajectory, 'gt_pos_err', 2).std()],
-                        'GlobalSimState':[]
+
+                        'AC2_NSE_Radial_Error_Mean': [AC2_GT_Trajectory['gt_hor_err'].mean()],
+                        'AC2_NSE_Radial_Error_Std': [AC2_GT_Trajectory['gt_hor_err'].std()],
+                        'AC2_NSE_Mean_x': [extract_from_df(AC2_GT_Trajectory, 'gt_pos_err', 0).mean()],
+                        'AC2_NSE_Mean_y': [extract_from_df(AC2_GT_Trajectory, 'gt_pos_err', 1).mean()],
+                        'AC2_NSE_Mean_z': [extract_from_df(AC2_GT_Trajectory, 'gt_pos_err', 2).mean()],
+                        'AC2_NSE_Std_x': [extract_from_df(AC2_GT_Trajectory, 'gt_pos_err', 0).std()],
+                        'AC2_NSE_Std_y': [extract_from_df(AC2_GT_Trajectory, 'gt_pos_err', 1).std()],
+                        'AC2_NSE_Std_z': [extract_from_df(AC2_GT_Trajectory, 'gt_pos_err', 2).std()],
+
+                        'AC1_Dist_to_Last_WPT': [AC1_Dist_to_Last_WPT],
+                        'AC2_Dist_to_Last_WPT': [AC2_Dist_to_Last_WPT],
+                        'AC1_EndState_Time': [AC1_State.time],
+                        'AC2_EndState_Time': [AC2_State.time],
+                        'Total_Flight_Time': [AC1_State.time + AC2_State.time]
                         })
     for tag in GT_ConDet.conflict_definitions.keys():
         res[tag + '_Start_Time'] = [GT_ConDet.get_earliest_conflict_start_time(tag)]
