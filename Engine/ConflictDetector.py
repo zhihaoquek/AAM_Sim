@@ -13,6 +13,7 @@ WCV detection: based on modified tau criteria
 import numpy as np
 from CrossPlatformDev import my_print
 from Engine.GlobalClock import Agent
+from Engine.State import State
 
 
 def calculate_tau(AC1_Pos, AC2_Pos, AC1_Vel, AC2_Vel, DMOD):
@@ -46,20 +47,25 @@ class ConflictDetector(Agent):
     At the end of the simulation, list of conflict times can be retrieved using the appropriate conflict definition
     tag. There are also methods to help calculate the earliest conflict start time and conflict end time.
     """
-    def __init__(self, update_rate, start_time, phase_delay=0):
+    def __init__(self, update_rate, start_time, phase_delay=0, AC1_State=None, AC2_State=None, AC1_Controller=None):
         super().__init__(update_rate, start_time, phase_delay)
         self.conflict_definitions = {}
         self.r_hor_sq = None
         self.vert_dist = None
         self.tau_DMOD = {}
         self.taus = {}
+        self.AC1_State = AC1_State
+        self.AC2_State = AC2_State
+        self.AC1_Controller = AC1_Controller
 
     def add_conflict_definition(self, condition_tag, condition):
         """Adds a conflict detection condition with a corresponding tag. Each condition should be a self-contained
         function that requires no inputs (necessary parameters should be bounded to this class as attributes) that
         evaluates to True iff the conflict definition/logic is satisfied by the A/C in question. """
         conflict_history = {'condition': condition, 'conflict_start_time': [], 'conflict_end_time': [],
-                            'is_in_conflict': False}
+                            'is_in_conflict': False, 'Rel_Hdg_(Desired_Track_Rad)': None, 'Rel_Hdg_(Actual_Rad)': None,
+                            'Rel_Vel_Hdg_(Actual_Rad)': None,
+                            'Rel_Hor_Dist': None, 'Rel_Vert_Dist': None}
         self.conflict_definitions[condition_tag] = conflict_history
 
     def add_DMOD(self, DMOD_tag, DMOD):
@@ -100,6 +106,32 @@ class ConflictDetector(Agent):
                 if (not condition_history['is_in_conflict']) & condition_history['condition']():
                     condition_history['is_in_conflict'] = True
                     condition_history['conflict_start_time'].append(time)
+                    if (not condition_history['Rel_Hdg_(Actual_Rad)']) & isinstance(self.AC1_State, State):
+                        hor_vel_AC1 = self.AC1_State.gt_vel.copy()
+                        hor_vel_AC1[2] = 0
+                        norm_AC1_hor_vel = np.linalg.norm(hor_vel_AC1)
+                        hor_vel_AC1 = hor_vel_AC1/norm_AC1_hor_vel
+                        hor_vel_AC2 = self.AC2_State.gt_vel.copy()
+                        hor_vel_AC2[2] = 0
+                        norm_AC2_hor_vel = np.linalg.norm(hor_vel_AC2)
+                        hor_vel_AC2 = hor_vel_AC2 / norm_AC2_hor_vel
+                        uAC1_dot_uAC2 = np.dot(hor_vel_AC1, hor_vel_AC2)
+                        # Add relative heading at conflict start time based on GT positions
+                        condition_history['Rel_Vel_Hdg_(Actual_Rad)'] = np.arccos(uAC1_dot_uAC2)
+
+                        # Add relative position at conflict start time based on GT positions
+                        hor_pos_AC1 = self.AC1_State.gt_pos.copy()
+                        hor_pos_AC2 = self.AC2_State.gt_pos.copy()
+                        condition_history['Rel_Vert_Dist'] = (self.AC2_State.gt_pos - self.AC1_State.gt_pos)[2]
+                        hor_pos_AC1[2] = 0
+                        hor_pos_AC2[2] = 0
+                        rel_AC1_AC2_pos = hor_pos_AC2 - hor_pos_AC1
+                        rel_AC1_AC2_pos_unit = rel_AC1_AC2_pos/np.linalg.norm(rel_AC1_AC2_pos)
+                        condition_history['Rel_Hor_Dist'] = np.linalg.norm(rel_AC1_AC2_pos)
+                        condition_history['Rel_Hdg_(Desired_Track_Rad)'] = np.arccos(np.dot(rel_AC1_AC2_pos_unit,
+                                                                        self.AC1_Controller.tangential_unit_vector_planar))
+                        condition_history['Rel_Hdg_(Actual_Rad)'] = np.arccos(np.dot(rel_AC1_AC2_pos_unit, hor_vel_AC1))
+
                 elif condition_history['is_in_conflict'] & (not condition_history['condition']()):
                     condition_history['is_in_conflict'] = False
                     condition_history['conflict_end_time'].append(time)
@@ -118,5 +150,6 @@ class ConflictDetector(Agent):
 
     def history_of_conflict(self, conflict_tag):
         return len(self.conflict_definitions[conflict_tag]['conflict_start_time']) > 0
+
 
 

@@ -24,6 +24,12 @@ from Engine.ConflictDetector import ConflictDetector
 Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param.csv')
 
 
+def estimate_max_linear_dim(prop_diam):
+    """Estimates max linear dimension (m) based on prop diameter (inches). Based on commercially available DJI
+    drone dimensions. """
+    return 0.018*prop_diam + 0.2884
+
+
 def get_run(df, run):
     return df.loc[df['Run'] == run]
 
@@ -289,12 +295,20 @@ def simulate_encounter_gen(run, debug):
 
     # Init Conflict Detection Algorithms
 
-    GT_ConDet = ConflictDetector(GlobalPhysicsUpdateRate, 0, phase_delay=0)
+    GT_ConDet = ConflictDetector(GlobalPhysicsUpdateRate, 0, phase_delay=0,
+                                 AC1_State=AC1_State, AC2_State=AC2_State, AC1_Controller=AC1_Controller)
 
     # Example format for adding distance-based criteria:
     # GT_ConDet.add_conflict_definition('TAG', GT_ConDet.gen_distance_condition(hor_dist_min, vert_dist_min))
     GT_ConDet.add_conflict_definition('NC1', GT_ConDet.gen_distance_condition(15.24, 4.572))
     GT_ConDet.add_conflict_definition('NC2', GT_ConDet.gen_distance_condition(1, 0.5))
+
+    AC1_Max_linear_dimension = estimate_max_linear_dim(AC1_AircraftType.prop_diameter)
+    AC2_Max_linear_dimension = estimate_max_linear_dim(AC2_AircraftType.prop_diameter)
+    NMAC_radius_linear_diameter = AC1_Max_linear_dimension + AC2_Max_linear_dimension
+
+    GT_ConDet.add_conflict_definition('NC3', GT_ConDet.gen_distance_condition(NMAC_radius_linear_diameter,
+                                                                              0.5 * NMAC_radius_linear_diameter))
 
     # Example format for adding tau-based criteria:
     # GT_ConDet.add_conflict_definition('TAG', GT_ConDet.gen_tau_mod_condition(tau_mod_min,
@@ -386,6 +400,11 @@ def simulate_encounter_gen(run, debug):
         res[tag + '_Start_Time'] = [GT_ConDet.get_earliest_conflict_start_time(tag)]
         res[tag + '_End_Time'] = [GT_ConDet.get_latest_conflict_end_time(tag)]
         res[tag + '_Detected'] = [GT_ConDet.history_of_conflict(tag) & 1]
+        res[tag + '_Rel_Hdg_(Actual_Rad)'] = [GT_ConDet.conflict_definitions[tag]['Rel_Hdg_(Actual_Rad)']]
+        res[tag + '_Rel_Hdg_(Desired_Track_Rad)'] = [GT_ConDet.conflict_definitions[tag]['Rel_Hdg_(Desired_Track_Rad)']]
+        res[tag + '_Rel_Vel_Hdg_(Actual_Rad)'] = [GT_ConDet.conflict_definitions[tag]['Rel_Vel_Hdg_(Actual_Rad)']]
+        res[tag + '_Rel_Hor_Dist'] = [GT_ConDet.conflict_definitions[tag]['Rel_Hor_Dist']]
+        res[tag + '_Rel_Vert_Dist'] = [GT_ConDet.conflict_definitions[tag]['Rel_Vert_Dist']]
 
     return res
 
