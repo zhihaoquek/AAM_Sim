@@ -128,8 +128,9 @@ class ConflictDetector(Agent):
                         rel_AC1_AC2_pos = hor_pos_AC2 - hor_pos_AC1
                         rel_AC1_AC2_pos_unit = rel_AC1_AC2_pos/np.linalg.norm(rel_AC1_AC2_pos)
                         condition_history['Rel_Hor_Dist'] = np.linalg.norm(rel_AC1_AC2_pos)
-                        condition_history['Rel_Hdg_(Desired_Track_Rad)'] = np.arccos(np.dot(rel_AC1_AC2_pos_unit,
-                                                                        self.AC1_Controller.tangential_unit_vector_planar))
+                        if not isinstance(self.AC1_Controller.tangential_unit_vector_planar, type(None)):
+                            condition_history['Rel_Hdg_(Desired_Track_Rad)'] = np.arccos(np.dot(rel_AC1_AC2_pos_unit,
+                                                                            self.AC1_Controller.tangential_unit_vector_planar))
                         condition_history['Rel_Hdg_(Actual_Rad)'] = np.arccos(np.dot(rel_AC1_AC2_pos_unit, hor_vel_AC1))
 
                 elif condition_history['is_in_conflict'] & (not condition_history['condition']()):
