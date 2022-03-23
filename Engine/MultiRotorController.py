@@ -276,7 +276,7 @@ class MultiRotorController(Agent):
         d_rpy_e = (rpy_e - self.last_rpy_e) / self.interval
         self.last_rpy_e = rpy_e
         self.integral_rpy_e = self.integral_rpy_e + rpy_e * self.interval
-        #### PID target torques ####################################
+        # ---- PID target torques ----
         target_angular_accel = np.multiply(self.p_att, rpy_e) \
                                + np.multiply(self.i_att, self.integral_rpy_e) \
                                + np.multiply(self.d_att, d_rpy_e)

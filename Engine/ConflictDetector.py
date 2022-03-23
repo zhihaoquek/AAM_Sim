@@ -33,7 +33,7 @@ def calculate_tau(AC1_Pos, AC2_Pos, AC1_Vel, AC2_Vel, DMOD):
     if vert_speed == 0:
         tau_vert = 999
     else:
-        tau_vert = -vert_dist / (vert_speed)
+        tau_vert = -vert_dist / vert_speed
     return tau_mod_hor, tau_vert
 
 

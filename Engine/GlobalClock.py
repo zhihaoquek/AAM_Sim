@@ -22,6 +22,9 @@ class GlobalClock(object):
     def update(self):
         self.time += self.dt
 
+    def reset_time(self, rst_time=0):
+        self.time = rst_time
+
 
 class Agent(object):
     """Generic agent template. Accepts timing info from global clock. Agent performs tasks at defined intervals."""
@@ -31,9 +34,6 @@ class Agent(object):
         self.interval = 1/self.update_rate
         self.next_update_time = start_time + phase_delay
         self.time = start_time
-
-    def set_next_update_time(self):
-        self.next_update_time += self.interval
 
     def check_time(self, time):
         self.time = time

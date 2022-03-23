@@ -16,6 +16,7 @@ class DragModel(object):
     2kg drone achieved cruise speed of ~20m/s at 40-45 deg pitch down attitude. Assume slip angle does not
     significantly contribute to C_d. Refer to get_Cd mtd for more details on C_d estimation.
     """
+
     def __init__(self, AircraftType, prop_diameter=9, disabled=False):
         self.disabled = disabled
         self.AircraftType = AircraftType
@@ -24,7 +25,7 @@ class DragModel(object):
         elif prop_diameter:
             self.prop_diameter = prop_diameter
             AircraftType.prop_diameter = prop_diameter
-            print('Changing A/C prop diameter to ', string(prop_diameter), '. Please check if base A/C type class has '
+            my_print('Changing A/C prop diameter to ', str(prop_diameter), '. Please check if base A/C type class has '
                                                                            'correct parameters initialized.')
 
         self.scaling = (self.prop_diameter / 9) ** 2
@@ -38,7 +39,7 @@ class DragModel(object):
         else:
             # return 19.62 * self.scaling*(0.035+0.017*(np.sin(alpha))**2) #<--- this works but drag is wayyyy too high
             # return self.scaling * (0.035 + 0.017 * (np.sin(alpha)) ** 2)
-            return self.scaling * (0.030 + 0.013 * (np.sin(alpha)) ** 2) # Tune down drag for a higher max speed...
+            return self.scaling * (0.030 + 0.013 * (np.sin(alpha)) ** 2)  # Tune down drag for a higher max speed...
 
     def get_angles(self, air_vel, rpy):
         """Gets air_vel using ground frame orientation, and aircraft RPY relative to ground. """
@@ -55,7 +56,7 @@ class DragModel(object):
                 beta = np.pi / 2
             else:
                 beta = np.arctan(y / x)
-        if alpha > np.pi/2:
+        if alpha > np.pi / 2:
             alpha = np.pi - alpha
         return np.array([alpha, beta])
 
@@ -67,15 +68,15 @@ class DragModel(object):
         else:
             x, y, z = rpy_trans(air_vel, rpy)
             if z == 0:
-                alpha = np.pi/2
+                alpha = np.pi / 2
             else:
                 alpha = np.pi / 2 - np.arctan(np.sqrt(x ** 2 + y ** 2) / z)
             if x == 0:
-                beta = np.pi/2
+                beta = np.pi / 2
             else:
                 beta = np.arctan(y / x)
             Cd = self.get_Cd(alpha, beta)
-            return -airspd*air_vel*Cd
+            return -airspd * air_vel * Cd
 
 
 def r_x(psi):

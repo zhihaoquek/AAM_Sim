@@ -15,7 +15,7 @@ class AircraftType(object):
                  model_file=None, max_cruise_spd=5, prop_diameter=9, mass=1.2):
 
         if not model_file:
-            # generate basic quadrotor model
+            # generate basic multirotor model
             self.mass = mass
 
             self.max_thrust = 200  # not in use at the moment...

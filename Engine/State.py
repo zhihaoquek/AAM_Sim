@@ -22,7 +22,7 @@ class State(Agent):
         self.air_vel = np.array([*vel]) - np.array([*wind_spd])
         self.accel = np.zeros(3)
         self.gt_pos_err = np.array([*pos_err])
-        self.gt_hor_err = np.sqrt(pos_err[0]**2 + pos_err[1]**2)
+        self.gt_hor_err = np.sqrt(pos_err[0] ** 2 + pos_err[1] ** 2)
         self.gt_vel_err = np.array([*vel_err])
         self.accel_err = np.zeros(3)
         self.rpy = np.array(rpy)
@@ -35,27 +35,25 @@ class State(Agent):
         self.simstate = 1
         self.trajectory = []
 
-
-
     def return_dict(self):
         return self.__dict__
 
     def return_df(self):
-        return pd.DataFrame({'gt_pos':[self.gt_pos], 'gt_vel':[self.gt_vel], 'wind_spd':[self.wind_spd],
-                             'air_vel':[self.air_vel], 'accel':[self.accel],
-                             'gt_pos_err':[self.gt_pos_err], 'gt_vel_err':[self.gt_vel_err],
+        return pd.DataFrame({'gt_pos': [self.gt_pos], 'gt_vel': [self.gt_vel], 'wind_spd': [self.wind_spd],
+                             'air_vel': [self.air_vel], 'accel': [self.accel],
+                             'gt_pos_err': [self.gt_pos_err], 'gt_vel_err': [self.gt_vel_err],
                              'gt_hor_err': [self.gt_hor_err],
-                             'accel_err':[self.accel_err],
-                             'rpy':[self.rpy], 'rpy_rate':[self.rpy_rate], 'rpy_accel':[self.rpy_accel],
-                             'commanded_net_force':[self.commanded_net_force],
-                             'controller_pos_err':[self.controller_pos_err],
-                             'thrust':[self.thrust],
-                             'time':[self.time]
+                             'accel_err': [self.accel_err],
+                             'rpy': [self.rpy], 'rpy_rate': [self.rpy_rate], 'rpy_accel': [self.rpy_accel],
+                             'commanded_net_force': [self.commanded_net_force],
+                             'controller_pos_err': [self.controller_pos_err],
+                             'thrust': [self.thrust],
+                             'time': [self.time]
                              })
 
     def gt_pos_est(self, time, pos_nav_agent):
         self.gt_pos_err = pos_nav_agent.update_error(time)
-        self.gt_hor_err = np.sqrt(self.gt_pos_err[0]**2 + self.gt_pos_err[1]**2)
+        self.gt_hor_err = np.sqrt(self.gt_pos_err[0] ** 2 + self.gt_pos_err[1] ** 2)
         return self.gt_pos + self.gt_pos_err
 
     def gt_vel_est(self, time, vel_nav_agent):
@@ -84,10 +82,11 @@ class State(Agent):
             drag = drag_model.get_drag(new_air_vel, self.rpy)
 
             # Controller calculates thrust, rpy
-            target_force, target_rpy, controller_error, commanded_net_force = controller.compute(self.gt_pos_est(time, pos_nav_agent),
-                                                                                                 self.gt_vel_est(time, vel_nav_agent),
-                                                                                                 self.gt_accel_est(time, accel_nav_agent),
-                                                                                                 new_wind_spd, time, drag_model, self.rpy)
+            target_force, target_rpy, controller_error, commanded_net_force = controller.compute(
+                self.gt_pos_est(time, pos_nav_agent),
+                self.gt_vel_est(time, vel_nav_agent),
+                self.gt_accel_est(time, accel_nav_agent),
+                new_wind_spd, time, drag_model, self.rpy)
 
             # Actual thrust/rpy achieved
             cur_rotation = R.from_euler('xyz', self.rpy).as_matrix()
@@ -95,11 +94,11 @@ class State(Agent):
             # Re-normalize thrust to ensure that A/C thrust "z" component is as desired
             # Check attitude
             norm = np.dot(cur_rotation, np.array([0, 0, 1]))
-            if np.arcsin(np.sqrt(norm[0]**2 + norm[1]**2)) < np.pi/2 - 0.1:
-                renorm = target_force[2]/thrust[2]
+            if np.arcsin(np.sqrt(norm[0] ** 2 + norm[1] ** 2)) < np.pi / 2 - 0.1:
+                renorm = target_force[2] / thrust[2]
                 thrust = renorm * thrust
             achieved_thrust = np.dot(np.array([0, 0, thrust[2]]), cur_rotation.T)
-            achieved_accel = (achieved_thrust + drag)/self.aircraft_type.mass - np.array([0, 0, 9.81])
+            achieved_accel = (achieved_thrust + drag) / self.aircraft_type.mass - np.array([0, 0, 9.81])
 
             target_rpy_accel = controller.pid_attitude(self.rpy, target_rpy)
             new_rpy_rate = self.rpy_rate + target_rpy_accel * self.interval
@@ -124,13 +123,10 @@ class State(Agent):
             self.commanded_net_force = commanded_net_force.copy()
             self.controller_pos_err = controller_error.copy()
 
-
             self.trajectory.append(self.return_df().copy())
 
     def get_trajectory(self):
         if len(self.trajectory) != 0:
-            return pd.concat(self.trajectory)
+            return pd.concat(self.trajectory, ignore_index=True)
         else:
             return None
-
-

@@ -20,9 +20,9 @@ class FlightPlan(object):
                  mode,
                  wpt_start, wpt_start_time,
                  wpt_end, wpt_end_time, duration):
-        self.plan = pd.DataFrame({'Leg No.':np.arange(len(wpt_start))+1, 'Target Speed':leg_spd, 'Mode':mode,
-                                  'Starting Wpt':wpt_start, 'EDT':wpt_start_time,
-                                  'Ending Wpt':wpt_end, 'ETA':wpt_end_time, 'Duration':duration})
+        self.plan = pd.DataFrame({'Leg No.': np.arange(len(wpt_start))+1, 'Target Speed': leg_spd, 'Mode': mode,
+                                  'Starting Wpt': wpt_start, 'EDT': wpt_start_time,
+                                  'Ending Wpt': wpt_end, 'ETA': wpt_end_time, 'Duration': duration})
         self.current_leg_num = 1
         self.current_leg = FlightLeg(self.plan.iloc[self.current_leg_num - 1]['Mode'],
                                      self.plan.iloc[self.current_leg_num - 1]['Starting Wpt'],
@@ -56,8 +56,8 @@ class FlightPlan(object):
             my_print('Next Wpt is: ', self.current_leg.target_pos)
             my_print('Hdg is: ', self.current_leg.hdg)
         elif self.current_leg_num == len(self.plan):
-                self.current_leg = None
-                return 'TERMINATE FLIGHT'
+            self.current_leg = None
+            return 'TERMINATE FLIGHT'
 
 
 class FlightLeg(object):
