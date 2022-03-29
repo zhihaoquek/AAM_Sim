@@ -310,6 +310,9 @@ def simulate_encounter_gen(run, debug):
     GT_ConDet.add_conflict_definition('NC3', GT_ConDet.gen_distance_condition(NMAC_radius_linear_diameter,
                                                                               0.5 * NMAC_radius_linear_diameter))
 
+    GT_ConDet.add_conflict_definition('NC4', GT_ConDet.gen_distance_condition(0.5 * NMAC_radius_linear_diameter,
+                                                                              0.25 * NMAC_radius_linear_diameter))
+
     # Example format for adding tau-based criteria:
     # GT_ConDet.add_conflict_definition('TAG', GT_ConDet.gen_tau_mod_condition(tau_mod_min,
     #                                                                          tau_vert_min,
