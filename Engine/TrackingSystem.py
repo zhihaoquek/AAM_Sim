@@ -23,8 +23,13 @@ class TrackingUnit(Agent):
     def __init__(self, AC_ident, update_rate, start_time,
                  latency, latency_distribution=None,
                  availability=1,
-                 pos_quant=2, vel_quant=2,
-                 phase_delay=None):
+                 pos_quant=None,
+                 hor_pos_quant=None,
+                 vert_pos_quant=None,
+                 vel_quant=None,
+                 phase_delay=None,
+                 rel_clk_sync_err=None
+                 ):
         if isinstance(phase_delay, type(None)):
             phase_delay = np.random.uniform(0, 1/update_rate)
         super().__init__(update_rate, start_time, phase_delay)
@@ -37,10 +42,19 @@ class TrackingUnit(Agent):
         self.latency_distribution = latency_distribution
         self.availability = availability
         self.pos_quantization = pos_quant  # Number of D.P. each value will be rounded to
+        if not isinstance(hor_pos_quant, type(None)):
+            self.hor_pos_quant = int(hor_pos_quant)
+        else:
+            self.hor_pos_quant = hor_pos_quant
+        if not isinstance(vert_pos_quant, type(None)):
+            self.vert_pos_quant = int(vert_pos_quant)
+        else:
+            self.vert_pos_quant = vert_pos_quant
         self.vel_quantization = vel_quant  # Number of D.P. each value will be rounded to
         if not isinstance(self.latency_distribution, type(None)):
             latency_func = latency_distribution.get_latency(state=None)
             self.get_latency = latency_func
+        self.rel_clk_sync_err = rel_clk_sync_err  # Fixed offset (i.e. no clock drift) clk sync error for timestamp
 
     def get_latency(self, state=None):
         return self.latency
@@ -61,10 +75,28 @@ class TrackingUnit(Agent):
 
                 transmission_time = self.next_update_time - self.interval
 
-                self.transit_est_pos_data.append(est_pos.round(self.pos_quantization))
-                self.transit_est_vel_data.append(est_vel.round(self.vel_quantization))
-                self.transmission_time.append(transmission_time)
+                if self.hor_pos_quant:
+                    est_pos[0], est_pos[1] = round(est_pos[0], self.hor_pos_quant), \
+                                             round(est_pos[1], self.hor_pos_quant)
+                if self.vert_pos_quant:
+                    est_pos[2] = round(est_pos[2], self.vert_pos_quant)
+
+                if self.pos_quantization:
+                    est_pos = est_pos.round(self.pos_quantization)
+
+                if self.vel_quantization:
+                    est_vel = est_vel.round(self.vel_quantization)
+
+                self.transit_est_pos_data.append(est_pos)
+                self.transit_est_vel_data.append(est_vel)
                 self.received_time.append(transmission_time + self.get_latency(state))
+                # ^^ transmission_time here is "accurate", i.e. synchronized to "global clock"
+                # Now, we model effect of de-synchronized clocks between tracking unit
+                # and ground station...
+                if self.rel_clk_sync_err:
+                    self.transmission_time.append(transmission_time + self.rel_clk_sync_err)
+                else:
+                    self.transmission_time.append(transmission_time)
 
     def get_next_rec_time(self):
         if len(self.received_time) > 0:
@@ -107,6 +139,14 @@ class SingleTrajectory(object):
         """Linearly extrapolate pos based on last reported A/C position and velocity."""
         if len(self.trajectory) > 0:
             return (extrapolated_time - self.trajectory[-1][0]) * self.trajectory[-1][5:8] + self.trajectory[-1][2:5]
+
+    def extrapolate_pos2(self, extrapolated_time):
+        if len(self.trajectory) > 0:
+            if self.trajectory[-1][0] > extrapolated_time:
+                return self.last_known_pos()
+            else:
+                return (extrapolated_time - self.trajectory[-1][0]) * self.trajectory[-1][5:8] + self.trajectory[-1][
+                                                                                                 2:5]
 
 
 class GroundStation(TimeTriggeredAgent):
