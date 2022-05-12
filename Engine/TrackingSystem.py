@@ -28,7 +28,8 @@ class TrackingUnit(Agent):
                  vert_pos_quant=None,
                  vel_quant=None,
                  phase_delay=None,
-                 rel_clk_sync_err=None
+                 rel_clk_sync_err=None,
+                 clk_quant=None
                  ):
         if isinstance(phase_delay, type(None)):
             phase_delay = np.random.uniform(0, 1/update_rate)
@@ -55,6 +56,7 @@ class TrackingUnit(Agent):
             latency_func = latency_distribution.get_latency(state=None)
             self.get_latency = latency_func
         self.rel_clk_sync_err = rel_clk_sync_err  # Fixed offset (i.e. no clock drift) clk sync error for timestamp
+        self.clk_quant = clk_quant # Number of DP to round-off transmission time to (in seconds)
 
     def get_latency(self, state=None):
         return self.latency
@@ -84,7 +86,56 @@ class TrackingUnit(Agent):
                 if self.pos_quantization:
                     est_pos = est_pos.round(self.pos_quantization)
 
-                if self.vel_quantization:
+                if self.vel_quantization == 'ASTM F3411-19':
+                    # 1 deg HDG res, 0.25 m/s grdspd res, 0.5 m/s vert spd res
+                    # Note: GS has a different res for higher spd regime
+                    x, y ,z = est_vel
+                    if (x == 0) & (y == 0):
+                        hdg = 0
+                    elif (x == 0) & (y > 0):
+                        hdg = 90
+                    elif (x == 0) & (y < 0):
+                        hdg = 270
+                    elif (x > 0) & (y >= 0):
+                        hdg = np.arctan(y / x) * 180 / np.pi
+                    elif (x < 0) & (y >= 0):
+                        hdg = 180 + np.arctan(y / x) * 180 / np.pi
+                    elif (x < 0) & (y <= 0):
+                        hdg = 180 + np.arctan(y / x) * 180 / np.pi
+                    elif (x > 0) & (y < 0):
+                        hdg = 360 + np.arctan(y / x) * 180 / np.pi
+                    hdg = round(hdg, 0)  # round off to nearest degree
+                    gspd = round(np.sqrt(x**2 + y**2)*4, 0)/4  # round off to 0.25 m/s
+                    z = round(z*2, 0)/2  # round off to nearest 0.5 m/s
+                    x = gspd * np.cos(np.pi * hdg / 180)
+                    y = gspd * np.sin(np.pi * hdg / 180)
+                    est_vel = np.array([x, y, z])
+
+                elif self.vel_quantization == 'ED-282':
+                    # 1 deg HDG res, 1 m/s grdspd res, 0.1 m/s vert spd res
+                    x, y, z = est_vel
+                    if (x == 0) & (y == 0):
+                        hdg = 0
+                    elif (x == 0) & (y > 0):
+                        hdg = 90
+                    elif (x == 0) & (y < 0):
+                        hdg = 270
+                    elif (x > 0) & (y >= 0):
+                        hdg = np.arctan(y / x) * 180 / np.pi
+                    elif (x < 0) & (y >= 0):
+                        hdg = 180 + np.arctan(y / x) * 180 / np.pi
+                    elif (x < 0) & (y <= 0):
+                        hdg = 180 + np.arctan(y / x) * 180 / np.pi
+                    elif (x > 0) & (y < 0):
+                        hdg = 360 + np.arctan(y / x) * 180 / np.pi
+                    hdg = round(hdg, 0)  # round off to nearest degree
+                    gspd = round(np.sqrt(x ** 2 + y ** 2), 0)  # round off to 1 m/s
+                    z = round(z, 1)   # round off to nearest 0.1 m/s
+                    x = gspd * np.cos(np.pi * hdg / 180)
+                    y = gspd * np.sin(np.pi * hdg / 180)
+                    est_vel = np.array([x, y, z])
+
+                elif self.vel_quantization:
                     est_vel = est_vel.round(self.vel_quantization)
 
                 self.transit_est_pos_data.append(est_pos)
@@ -94,9 +145,16 @@ class TrackingUnit(Agent):
                 # Now, we model effect of de-synchronized clocks between tracking unit
                 # and ground station...
                 if self.rel_clk_sync_err:
-                    self.transmission_time.append(transmission_time + self.rel_clk_sync_err)
+                    if isinstance(self.clk_quant, type(None)):
+                        self.transmission_time.append(transmission_time + self.rel_clk_sync_err)
+                    else:
+                        self.transmission_time.append(round(transmission_time + self.rel_clk_sync_err,
+                                                            self.clk_quant))
                 else:
-                    self.transmission_time.append(transmission_time)
+                    if isinstance(self.clk_quant, type(None)):
+                        self.transmission_time.append(transmission_time)
+                    else:
+                        self.transmission_time.append(round(transmission_time, self.clk_quant))
 
     def get_next_rec_time(self):
         if len(self.received_time) > 0:
@@ -148,6 +206,10 @@ class SingleTrajectory(object):
                 return (extrapolated_time - self.trajectory[-1][0]) * self.trajectory[-1][5:8] + self.trajectory[-1][
                                                                                                  2:5]
 
+    def extrapolate_pos3(self, extrapolated_time):
+        if len(self.trajectory) > 0:
+            return (extrapolated_time - self.trajectory[-1][1]) * self.trajectory[-1][5:8] + self.trajectory[-1][
+                                                                                                 2:5]
 
 class GroundStation(TimeTriggeredAgent):
     def __init__(self, update_rate, start_time, phase_delay=0):

@@ -14,8 +14,8 @@ def my_print(*args):
     For debugging use. Prints output when debugging on a Windows machine.
     For running on Linux systems like AWS servers, it will NOT print. This is to avoid
     issues with tqdm package in Jupyter notebooks. """
-    if platform.system() == 'Windows':
-        print(*args)
+    #if platform.system() == 'Windows':
+        #print(*args)
 
 
 def join_str(*args):
@@ -29,3 +29,27 @@ def join_str(*args):
             return args[0] + '/' + join_str(*args[1:])
         else:
             return args[0]
+
+
+def keyword_list_filter(l, *keys):
+    if len(keys) > 1:
+        # print(keys[0])
+        l_filtered = list(filter(lambda x: keys[0] in x, l))
+        # print('l_filtered', l_filtered, 'keys[1:]', *keys[1:])
+        return keyword_list_filter(l_filtered, *keys[1:])
+    else:
+        # print(keys[0])
+        return list(filter(lambda x: keys[0] in x, l))
+
+
+def keyword_list_exclude(l, *keys):
+    if len(keys) > 1:
+        l_filtered = list(filter(lambda x: keys[0] not in x, l))
+        return keyword_list_exclude(l_filtered, *keys[1:])
+    else:
+        return list(filter(lambda x: keys[0] not in x, l))
+
+
+def filter_column_names(df, *keys):
+    cols = df.columns
+    return keyword_list_filter(cols, *keys)

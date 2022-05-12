@@ -324,14 +324,14 @@ def simulate_encounter_gen(run, debug):
         GT_ConDet.add_conflict_definition('WC1' + chr(97 + i),
                                           GT_ConDet.gen_distance_condition(5 * (i + 1), 2.5 * (i + 1)))
         # Add WCV tau-based criteria
-        GT_ConDet.add_conflict_definition('WC2' + chr(97 + i),
-                                          GT_ConDet.gen_tau_mod_condition(25, 25, 5 * (i + 1), 2.5 * (i + 1)))
+        # GT_ConDet.add_conflict_definition('WC2' + chr(97 + i),
+        #                                   GT_ConDet.gen_tau_mod_condition(25, 25, 5 * (i + 1), 2.5 * (i + 1)))
 
-    for i in range(5):
+    # for i in range(5):
         # Add WCV tau-based criteria
-        tau_crit = 20 + 5 * i
-        GT_ConDet.add_conflict_definition('WC3' + chr(97 + i),
-                                          GT_ConDet.gen_tau_mod_condition(tau_crit, tau_crit, 20, 10))
+        # tau_crit = 20 + 5 * i
+        # GT_ConDet.add_conflict_definition('WC3' + chr(97 + i),
+        #                                   GT_ConDet.gen_tau_mod_condition(tau_crit, tau_crit, 20, 10))
 
     # Let's try to simulate this...
 
@@ -357,7 +357,7 @@ def simulate_encounter_gen(run, debug):
         Trackinator.track_and_update_trajectories(clock.time)
         # Check if there is conflict based on ground truth position/velocity
         GT_ConDet.update_r_hor_sq_vert_dist(AC1_State.gt_pos, AC2_State.gt_pos)
-        GT_ConDet.update_taus(AC1_State.gt_pos, AC2_State.gt_pos, AC1_State.gt_vel, AC2_State.gt_vel)
+        # GT_ConDet.update_taus(AC1_State.gt_pos, AC2_State.gt_pos, AC1_State.gt_vel, AC2_State.gt_vel)
         GT_ConDet.conflict_check(clock.time)
 
     # After running the simulation, get trajectory info
