@@ -25,9 +25,12 @@ from Engine.DragModel import DragModel
 from Engine.TrackingSystem import *
 from Engine.ConflictDetector import ConflictDetector
 
-Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param_Sensitivity_Analysis.csv')
-
-TS_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Sim_Tracking_Param_v2_EXT.csv')
+if 'TwoAircraftEncounter' in os.getcwd():
+    Init_Param_Path = join_str(os.getcwd(), 'Init_Param_Sensitivity_Analysis.csv')
+    TS_Param_Path = join_str(os.getcwd(), 'Sim_Tracking_Param_v2_EXT.csv')
+else:
+    Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param_Sensitivity_Analysis.csv')
+    TS_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Sim_Tracking_Param_v2_EXT.csv')
 
 df_trk_sys_params = pd.read_csv(TS_Param_Path)
 
