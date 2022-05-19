@@ -10,14 +10,14 @@
 import numpy as np
 import os
 import sys
-cur_dir = os.path.dirname(os.path.abspath(__file__)) 
+cur_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(cur_dir)
 sys.path.append(os.path.dirname(os.path.dirname(cur_dir)))  # Add path to directory
 sys.path.append(os.getcwd())  # Add directory to path
 import pandas as pd
 from CrossPlatformDev import my_print, join_str
 from ScenarioMP_Sensitivity_Analysis_v2 import simulate_encounter
-from mpi4py.futures import *
+from mpi4py.futures import MPIPoolExecutor
 import psutil
 from tqdm import tqdm
 import time
@@ -30,13 +30,13 @@ warnings.filterwarnings('ignore') # <---- hides warnings, makes tqdm work better
 Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param_Sensitivity_Analysis.csv')
 data = pd.read_csv(Init_Param_Path)
 
-data = data['Run'].unique()[0:8]
+data = data['Run'].unique()[0:4]
 print('Number of available CPU cores: %s'%psutil.cpu_count(logical=True))
 if __name__ == '__main__':
     start = time.time()
-    executor = MPIPoolExecutor()
-    for result in executor.map(simulate_encounter, data):
-        result = pd.concat(result)
+    with MPIPoolExecutor() as executor:
+        results = executor.map(simulate_encounter, data)
+        results = pd.concat(results)
     end = time.time()
     compute_time = end - start
     simulated_flight_time_s = results['Total_Flight_Time'].sum()
