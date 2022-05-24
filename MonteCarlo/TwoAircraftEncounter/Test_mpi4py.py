@@ -18,6 +18,7 @@ import pandas as pd
 from CrossPlatformDev import my_print, join_str
 from ScenarioMP_Sensitivity_Analysis_v2 import simulate_encounter
 from mpi4py.futures import MPIPoolExecutor
+from mpi4py import MPI
 import psutil
 from tqdm import tqdm
 import time
@@ -32,11 +33,14 @@ data = pd.read_csv(Init_Param_Path)
 
 data = data['Run'].unique()[0:8]
 print('Number of available CPU cores: %s'%psutil.cpu_count(logical=True))
+# comm = MPI.COMM_WORLD
+# universe_size=comm.Get_attr(MPI.UNIVERSE_SIZE)
+# print("universe size is ", universe_size)
 if __name__ == '__main__':
     start = time.time()
-    with MPIPoolExecutor() as executor:
-        results = executor.map(simulate_encounter, data)
-        results = pd.concat(results)
+    executor = MPIPoolExecutor(max_workers=8)
+    results = executor.map(simulate_encounter, data)
+    results = pd.concat(results)
     end = time.time()
     compute_time = end - start
     simulated_flight_time_s = results['Total_Flight_Time'].sum()
