@@ -58,6 +58,6 @@ L1,90,2,1,ExtOff,10,L1_ExtOff
 EXT_R20,90,2,0.3,ExtOff,20,EXT_R20_ExtOff
 EXT_R10,90,2,0.3,ExtOff,10,EXT_R10_ExtOff
 EXT_R5,90,2,0.3,ExtOff,5,EXT_R5_ExtOff
-Best,99,10,0.1,ExtOff,20,Best_ExtOff
+Best,99,5,0.1,ExtOff,20,Best_ExtOff
 Realistic,90,2,0.3,ExtOff,10,Realistic_ExtOff
-Worst,80,0.333333333,1,ExtOff,5,Worst_ExtOff
+Worst,80,0.2,1,ExtOff,5,Worst_ExtOff
