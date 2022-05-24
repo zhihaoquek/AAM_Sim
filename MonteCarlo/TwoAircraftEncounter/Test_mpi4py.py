@@ -31,7 +31,7 @@ warnings.filterwarnings('ignore') # <---- hides warnings, makes tqdm work better
 Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param_Sensitivity_Analysis.csv')
 data = pd.read_csv(Init_Param_Path)
 
-data = data['Run'].unique()[0:8]
+data = data['Run'].unique()[0:12]
 print('Number of available CPU cores: %s'%psutil.cpu_count(logical=True))
 # comm = MPI.COMM_WORLD
 # universe_size=comm.Get_attr(MPI.UNIVERSE_SIZE)
