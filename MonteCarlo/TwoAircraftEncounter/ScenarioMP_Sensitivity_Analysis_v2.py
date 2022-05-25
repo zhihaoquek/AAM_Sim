@@ -12,7 +12,7 @@ import os
 # os.chdir(os.path.dirname(os.path.abspath(__file__)))  # Set directory to location of this .py file
 # os.chdir('..')
 # os.chdir('..')
-print(os.getcwd())
+# print(os.getcwd())
 from CrossPlatformDev import my_print, join_str
 from Engine.GlobalClock import GlobalClock, Agent
 from Engine.State import State

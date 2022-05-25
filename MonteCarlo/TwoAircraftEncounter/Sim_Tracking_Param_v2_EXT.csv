@@ -18,9 +18,9 @@ L1,90,2,1,Ext3,10,L1_Ext3
 EXT_R20,90,2,0.3,Ext3,20,EXT_R20_Ext3
 EXT_R10,90,2,0.3,Ext3,10,EXT_R10_Ext3
 EXT_R5,90,2,0.3,Ext3,5,EXT_R5_Ext3
-Best,99,10,0.1,Ext3,20,Best_Ext3
+Best,99,5,0.1,Ext3,20,Best_Ext3
 Realistic,90,2,0.3,Ext3,10,Realistic_Ext3
-Worst,80,0.333333333,1,Ext3,5,Worst_Ext3
+Worst,80,0.2,1,Ext3,5,Worst_Ext3
 A90,90,2,0.3,Ext2,10,A90_Ext2
 A85,85,2,0.3,Ext2,10,A85_Ext2
 A80,80,2,0.3,Ext2,10,A80_Ext2
@@ -38,9 +38,9 @@ L1,90,2,1,Ext2,10,L1_Ext2
 EXT_R20,90,2,0.3,Ext2,20,EXT_R20_Ext2
 EXT_R10,90,2,0.3,Ext2,10,EXT_R10_Ext2
 EXT_R5,90,2,0.3,Ext2,5,EXT_R5_Ext2
-Best,99,10,0.1,Ext2,20,Best_Ext2
+Best,99,5,0.1,Ext2,20,Best_Ext2
 Realistic,90,2,0.3,Ext2,10,Realistic_Ext2
-Worst,80,0.333333333,1,Ext2,5,Worst_Ext2
+Worst,80,0.2,1,Ext2,5,Worst_Ext2
 A90,90,2,0.3,ExtOff,10,A90_ExtOff
 A85,85,2,0.3,ExtOff,10,A85_ExtOff
 A80,80,2,0.3,ExtOff,10,A80_ExtOff
