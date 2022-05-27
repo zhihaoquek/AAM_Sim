@@ -21,8 +21,12 @@ from Engine.DragModel import DragModel
 from Engine.TrackingSystem import *
 from Engine.ConflictDetector import ConflictDetector
 
-Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param.csv')
+if 'TwoAircraftEncounter' in os.getcwd():
+    Init_Param_Path = join_str(os.getcwd(), 'Init_Param.csv')
+else:
+    Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param.csv')
 
+params = pd.read_csv(Init_Param_Path)
 
 def estimate_max_linear_dim(prop_diam):
     """Estimates max linear dimension (m) based on prop diameter (inches). Based on commercially available DJI
@@ -36,7 +40,6 @@ def get_run(df, run):
 
 def get_val(df, key):
     return df.iloc[0][key]
-
 
 def get_param():
     """For debugging use. To check if directory is correctly set to read the param file."""
@@ -93,7 +96,7 @@ def simulate_encounter_debug(run):
 
 
 def simulate_encounter_gen(run, debug):
-    params = pd.read_csv(Init_Param_Path)
+    # params = pd.read_csv(Init_Param_Path)
     run_params = get_run(params, run)
 
     # Global Params
@@ -312,6 +315,10 @@ def simulate_encounter_gen(run, debug):
 
     GT_ConDet.add_conflict_definition('NC4', GT_ConDet.gen_distance_condition(0.5 * NMAC_radius_linear_diameter,
                                                                               0.25 * NMAC_radius_linear_diameter))
+
+    GT_ConDet.add_conflict_definition('NC5', GT_ConDet.gen_distance_condition(15.24 * 2, 4.572 * 2))
+
+    GT_ConDet.add_conflict_definition('NC6', GT_ConDet.gen_distance_condition(2, 1))
 
     # Example format for adding tau-based criteria:
     # GT_ConDet.add_conflict_definition('TAG', GT_ConDet.gen_tau_mod_condition(tau_mod_min,
