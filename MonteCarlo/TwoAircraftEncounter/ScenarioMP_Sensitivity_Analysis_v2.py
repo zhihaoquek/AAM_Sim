@@ -27,9 +27,15 @@ from Engine.ConflictDetector import ConflictDetector
 
 if 'TwoAircraftEncounter' in os.getcwd():
     Init_Param_Path = join_str(os.getcwd(), 'Init_Param_Sensitivity_Analysis.csv')
+    Init_Param_Path_Split_0 = join_str(os.getcwd(), 'Init_Param_Sensitivity_Analysis_0.csv')
+    Init_Param_Path_Split_1 = join_str(os.getcwd(), 'Init_Param_Sensitivity_Analysis_1.csv')
     TS_Param_Path = join_str(os.getcwd(), 'Sim_Tracking_Param_v2_EXT.csv')
 else:
     Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param_Sensitivity_Analysis.csv')
+    Init_Param_Path_Split_0 = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter',
+                                       'Init_Param_Sensitivity_Analysis_0.csv')
+    Init_Param_Path_Split_1 = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter',
+                                       'Init_Param_Sensitivity_Analysis_1.csv')
     TS_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Sim_Tracking_Param_v2_EXT.csv')
 
 df_trk_sys_params = pd.read_csv(TS_Param_Path)
@@ -94,6 +100,14 @@ def FP_gen(HDG, speed, time, num_wpts, ini_pos):
                        wpt_end_list, wpt_end_time, duration_list), wpt_list)
 
 
+def simulate_encounter_0(run):
+    return simulate_encounter_gen(run, debug=False, path=Init_Param_Path_Split_0)
+
+
+def simulate_encounter_1(run):
+    return simulate_encounter_gen(run, debug=False, path=Init_Param_Path_Split_1)
+
+
 def simulate_encounter(run):
     return simulate_encounter_gen(run, debug=False)
 
@@ -102,8 +116,8 @@ def simulate_encounter_debug(run):
     return simulate_encounter_gen(run, debug=True)
 
 
-def simulate_encounter_gen(run, debug):
-    params = pd.read_csv(Init_Param_Path)
+def simulate_encounter_gen(run, debug, path=Init_Param_Path):
+    params = pd.read_csv(path)
     run_params = get_run(params, run)
 
     # Global Params
@@ -300,10 +314,11 @@ def simulate_encounter_gen(run, debug):
     # GT_ConDet.add_conflict_definition('TAG', GT_ConDet.gen_distance_condition(hor_dist_min, vert_dist_min))
     # GT_ConDet.add_conflict_definition('NC1', GT_ConDet.gen_distance_condition(15.24, 4.572))
     GT_ConDet.add_conflict_definition('GT_NC2', GT_ConDet.gen_distance_condition(1, 0.5))
-    GT_ConDet.add_conflict_definition('GT_WC_Dist_15m',
-                                      GT_ConDet.gen_distance_condition(15, 7.5))
-    GT_ConDet.add_conflict_definition('GT_WC_Dist_30m',
-                                      GT_ConDet.gen_distance_condition(30, 15))
+    GT_ConDet.add_conflict_definition('GT_NC6', GT_ConDet.gen_distance_condition(2, 1))
+    # GT_ConDet.add_conflict_definition('GT_WC_Dist_15m',
+    #                                   GT_ConDet.gen_distance_condition(15, 7.5))
+    GT_ConDet.add_conflict_definition('GT_WC_Dist_20m',
+                                      GT_ConDet.gen_distance_condition(20, 10))
 
     trk_clk_func = lambda x: AC1_Trk_Unit_Clk_Sync_Err if x == 'AC1' else AC2_Trk_Unit_Clk_Sync_Err
     # # Initialize all tracking units (self-reporting)
@@ -384,8 +399,8 @@ def simulate_encounter_gen(run, debug):
                               0, phase_delay=np.random.uniform(0, 1 / GS_CD_rel_pos_ur),
                               AC1_State=AC1_State, AC2_State=AC2_State,
                               AC1_Controller=AC1_Controller)
-        CD.add_conflict_definition(tag+'_NC2', CD.gen_distance_condition(1, 0.5))
-        CD.add_conflict_definition(tag + '_WC_Dist_30m', CD.gen_distance_condition(30, 15))  # Change as necessary
+        CD.add_conflict_definition(tag+'_NC6', CD.gen_distance_condition(2, 1))
+        CD.add_conflict_definition(tag + '_WC_Dist_20m', CD.gen_distance_condition(20, 10))  # Change as necessary
         ConDets.append(CD)
 
 
