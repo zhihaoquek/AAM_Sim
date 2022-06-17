@@ -31,7 +31,7 @@ if 'TwoAircraftEncounter' in os.getcwd():
     Init_Param_Path_Split_1 = join_str(os.getcwd(), 'Init_Param_Sensitivity_Analysis_1.csv')
     Init_Param_Path_Split_2 = join_str(os.getcwd(), 'Init_Param_Sensitivity_Analysis_2.csv')
     Init_Param_Path_Split_3 = join_str(os.getcwd(), 'Init_Param_Sensitivity_Analysis_3.csv')
-    TS_Param_Path = join_str(os.getcwd(), 'Sim_Tracking_Param_v2_EXT.csv')
+    TS_Param_Path = join_str(os.getcwd(), 'Sim_Tracking_Param_v3_EXT.csv')
 else:
     Init_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Init_Param_Sensitivity_Analysis.csv')
     Init_Param_Path_Split_0 = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter',
@@ -42,7 +42,7 @@ else:
                                        'Init_Param_Sensitivity_Analysis_2.csv')
     Init_Param_Path_Split_3 = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter',
                                        'Init_Param_Sensitivity_Analysis_3.csv')
-    TS_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Sim_Tracking_Param_v2_EXT.csv')
+    TS_Param_Path = join_str(os.getcwd(), 'MonteCarlo', 'TwoAircraftEncounter', 'Sim_Tracking_Param_v3_EXT.csv')
 
 df_trk_sys_params = pd.read_csv(TS_Param_Path)
 
