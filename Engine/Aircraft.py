@@ -18,9 +18,11 @@ class AircraftType(object):
             # generate basic multirotor model
             self.mass = mass
 
-            self.max_thrust = 200  # not in use at the moment...
-            # self.max_roll_pitch = np.pi / 4 # Original value
-            self.max_roll_pitch = np.pi / 2.2
+            # self.max_thrust = 200  # not in use at the moment... (deprecated)
+            self.max_thrust = 3 * self.mass * 9.81
+            # self.max_roll_pitch = np.pi / 4 # Original value (deprecated)
+            # self.max_roll_pitch = np.pi / 2.2  # Previous Best
+            self.max_roll_pitch = np.pi / 2.05
 
             self.max_cruise_speed = max_cruise_spd  # default was 20, now changed to 5
             self.max_ascend_speed = 2  # default was 5
